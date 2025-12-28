@@ -2,7 +2,11 @@ package springai.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.SafeGuardAdvisor;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.client.advisor.vectorstore.VectorStoreChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
@@ -26,6 +30,7 @@ public class RAGService {
 
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
+    private final ChatMemory chatMemory;
 
     public void ingestVectorStore() {
         PagePdfDocumentReader reader = new PagePdfDocumentReader(faqPdfResource);
@@ -39,7 +44,6 @@ public class RAGService {
         vectorStore.add(chunks);
 
     }
-
 
     public String askAI(String prompt) {
         String template = """
@@ -73,11 +77,43 @@ public class RAGService {
         return chatClient.prompt()
                 .system(systemPrompt)
                 .user(prompt)
-                .advisors(new SimpleLoggerAdvisor())//For full logging
                 .call()
                 .content();
 
     }
 
+    String askAiWithAdvisorPrompt = """
+            You are an AI assistant called Cody.
+            Use the provided context to answer questions.
+            If the context does not explicitly contain the user's specific personal information
+            (like their name or DOB), do not make it up and do not use example data from the documents. 
+            Simply say 'I do not have that information recorded.'
+            Greet users with your name(Cody) and the user name if you know their name.
+            
+            """;
+
+    public String askAiWithAdvisor(String prompt, String userId) {
+        return chatClient.prompt()
+                .system(askAiWithAdvisorPrompt)
+                .user(prompt)
+
+                .advisors(
+                        new SafeGuardAdvisor(List.of("secret", "password", "credential", "bank account")),
+                        MessageChatMemoryAdvisor.builder(chatMemory)
+                                .conversationId(userId)
+                                .build(),
+                        VectorStoreChatMemoryAdvisor.builder(vectorStore)
+                                .conversationId(userId)
+                                .defaultTopK(4)
+                                .build(),
+                        QuestionAnswerAdvisor.builder(vectorStore)
+                                .searchRequest(SearchRequest.builder()
+                                        .filterExpression("file_name == 'faq.pdf'")
+                                        .topK(4)
+                                        .build())
+                                .build())
+                .call()
+                .content();
+    }
 
 }

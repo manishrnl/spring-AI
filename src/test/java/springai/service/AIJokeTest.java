@@ -21,8 +21,8 @@ public class AIJokeTest {
     public void testEmbedText() {
         var embed = aiService.getEmbedding("This is a big text here");
         System.out.println(embed.length);
-        for(float e: embed) {
-            System.out.print(e+" ");
+        for (float e : embed) {
+            System.out.print(e + " ");
         }
     }
 
@@ -34,7 +34,7 @@ public class AIJokeTest {
     @Test
     public void testSimilaritySearch() {
         var res = aiService.similaritySearch("movies of different genre");
-        for(var doc: res) {
+        for (var doc : res) {
             System.out.println(doc);
         }
 

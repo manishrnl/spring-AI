@@ -17,7 +17,13 @@ public class RAGServiceTest {
     }
 
     @Test
-    void testIngest(){
-      ragService.ingestVectorStore();
+    void testIngest() {
+        ragService.ingestVectorStore();
+    }
+
+    @Test
+    void testAskAIWithAdvisor() {
+        String response = ragService.askAiWithAdvisor("whats my nationality and email address", "1");
+        System.out.println("AI Response with Advisor: {}" + response);
     }
 }

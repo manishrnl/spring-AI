@@ -15,11 +15,10 @@ spring:
       base-url: http://localhost:11434
       chat:
         options:
-          model: gemma2:2b
+          model: qwen2.5:3b
       embedding:
         options:
           model: mxbai-embed-large:335m
-
     # 3. Vector Store (pgvector) Configuration
     vectorstore:
       pgvector:
@@ -30,12 +29,12 @@ spring:
         distance-type: COSINE_DISTANCE
 
     # 4. Chat Memory (JDBC) Configuration
-      chat:
-        memory:
-          repository:
-            jdbc:
-              initialize-schema: always
-              table-name: chat_memory
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
+            table-name: spring_ai_chat_memory
 
   # 5. JPA/Hibernate Settings
   jpa:
