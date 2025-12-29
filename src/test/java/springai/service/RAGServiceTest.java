@@ -13,7 +13,7 @@ public class RAGServiceTest {
     @Test
     void askAI() {
         String response = ragService.askAI("how to connect to discord account");
-        System.out.println("AI Response: {}" + response);
+        System.out.println( response);
     }
 
     @Test
@@ -23,7 +23,7 @@ public class RAGServiceTest {
 
     @Test
     void testAskAIWithAdvisor() {
-        String response = ragService.askAiWithAdvisor("whats my nationality and email address", "1");
-        System.out.println("AI Response with Advisor: {}" + response);
+        String response = ragService.askAiWithAdvisor("my player is not working", "1");
+        System.out.println( response);
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import springai.advisor.TokenUsageAdvisor;
 
 import java.util.List;
 import java.util.Map;
@@ -111,7 +112,10 @@ public class RAGService {
                                         .filterExpression("file_name == 'faq.pdf'")
                                         .topK(4)
                                         .build())
-                                .build())
+                                .build(),
+
+                        new TokenUsageAdvisor() //To get Token Usage Details
+                )
                 .call()
                 .content();
     }

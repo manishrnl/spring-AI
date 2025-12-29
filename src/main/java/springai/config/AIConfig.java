@@ -14,7 +14,7 @@ public class AIConfig {
     @Bean
     public ChatClient chatClient(ChatClient.Builder builder) {
         return builder
-                .defaultAdvisors(new SimpleLoggerAdvisor())
+              //  .defaultAdvisors(new SimpleLoggerAdvisor())
                 .build();
     }
 
