@@ -2,39 +2,42 @@ package springai.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.document.Document;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import springai.service.EmbeddingService;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.web.bind.annotation.*;
+import springai.tool.FlightBookingTools;
+import springai.tool.TravellingTools;
 
 @RestController
-@RequestMapping("/ai")
 @RequiredArgsConstructor
 public class ChatController {
 
-    private final EmbeddingService embeddingService;
     private final ChatClient chatClient;
+    private final TravellingTools travellingTools;
+    private final FlightBookingTools flightBookingTools;
+    private final ChatMemory chatMemory;
 
-    @GetMapping("/search")
-    public String searchMovies(@RequestParam(defaultValue = "Tell me about dreams") String query) {
-        // 1. Get relevant documents from Postgres
-        List<Document> similarDocs = embeddingService.similaritySearch(query);
+    @PostMapping("/chat")
+    public String chat(@RequestBody String message, @RequestParam String userId) {
 
-        // 2. Combine the content of the docs
-        String information = similarDocs.stream()
-                .map(Document::getText)
-                .collect(Collectors.joining("\n"));
+        String systemPrompt = String.format("""
+            You are a friendly flight booking assistant.
+            Use the available tools to create, view, or update bookings.
+            Always confirm actions with the user when possible.
+            
+            IMPORTANT: The current user's ID is "%s".
+            When calling tools that require a userId, ALWAYS use this exact value.
+            """, userId);
 
-        // 3. Ask the LLM to answer using the found information
-        return chatClient.prompt()
-                .user(u -> u.text("Answer the question: {query} using only this info: {info}")
-                        .param("query", query)
-                        .param("info", information))
+        return  chatClient.prompt()
+                .system(systemPrompt)
+                .user(message)
+                .tools(travellingTools, flightBookingTools)
+                .advisors(
+                        MessageChatMemoryAdvisor.builder(chatMemory)
+                                .conversationId(userId)
+                                .build()
+                )
                 .call()
                 .content();
     }
